@@ -5,6 +5,8 @@ import java.util.TimerTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.witness.informacam.informa.InformaService;
+import org.witness.informacam.informa.LogPack;
 import org.witness.informacam.informa.SensorLogger;
 import org.witness.informacam.utils.Constants.Suckers;
 
@@ -22,17 +24,15 @@ public class AccelerometerSucker extends SensorLogger implements SensorEventList
 	SensorManager sm;
 	List<Sensor> availableSensors;
 	boolean hasAccelerometer, hasOrientation, hasLight, hasMagneticField;
-	JSONObject currentAccelerometer, currentLight, currentMagField;
+	LogPack currentAccelerometer, currentLight, currentMagField;
 			
 	@SuppressWarnings("unchecked")
-	public AccelerometerSucker(Context c) {
-		super(c);
+	public AccelerometerSucker(InformaService is) {
+		super(is);
 		setSucker(this);
 		
-		sm = (SensorManager) c.getSystemService(Context.SENSOR_SERVICE);
+		sm = (SensorManager) is.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
 		availableSensors = sm.getSensorList(Sensor.TYPE_ALL);
-		
-		currentAccelerometer = currentLight = currentMagField = new JSONObject();
 		
 		for(Sensor s : availableSensors) {
 			switch(s.getType()) {
@@ -71,27 +71,25 @@ public class AccelerometerSucker extends SensorLogger implements SensorEventList
 	}
 	
 	private void readAccelerometer() throws JSONException {
-		sendToBuffer(currentAccelerometer);
+		if(currentAccelerometer != null)
+			sendToBuffer(currentAccelerometer);
 	}
 	
 	private void readOrientation() throws JSONException {
-		sendToBuffer(currentMagField);
+		if(currentMagField != null)
+			sendToBuffer(currentMagField);
 	}
 	
 	private void readLight() throws JSONException {
-		sendToBuffer(currentLight);
+		if(currentLight != null)
+			sendToBuffer(currentLight);
 	}
 	
-	public JSONObject forceReturn() {
-		try {
-			JSONObject fr = new JSONObject();
-			fr.put(Suckers.Accelerometer.Keys.ACC, currentAccelerometer);
-			fr.put(Suckers.Accelerometer.Keys.ORIENTATION, currentMagField);
-			fr.put(Suckers.Accelerometer.Keys.LIGHT, currentLight);
-			return fr;
-		} catch(JSONException e) {
-			return null;
-		}
+	public LogPack forceReturn() throws JSONException {
+		LogPack fr = new LogPack(Suckers.Accelerometer.Keys.ACC, currentAccelerometer);
+		fr.put(Suckers.Accelerometer.Keys.ORIENTATION, currentMagField);
+		fr.put(Suckers.Accelerometer.Keys.LIGHT, currentLight);
+		return fr;
 	}
 
 	@Override
@@ -101,7 +99,7 @@ public class AccelerometerSucker extends SensorLogger implements SensorEventList
 	public void onSensorChanged(SensorEvent event) {
 		synchronized(this) {
 			if(getIsRunning()) {
-				JSONObject sVals = new JSONObject();
+				LogPack sVals = new LogPack();
 				
 				try {				
 					switch(event.sensor.getType()) {

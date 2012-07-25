@@ -4,6 +4,8 @@ import java.util.TimerTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.witness.informacam.informa.InformaService;
+import org.witness.informacam.informa.LogPack;
 import org.witness.informacam.informa.SensorLogger;
 import org.witness.informacam.utils.Constants.Suckers;
 
@@ -21,11 +23,11 @@ public class GeoSucker extends SensorLogger implements LocationListener {
 	Criteria criteria;
 	
 	@SuppressWarnings("unchecked")
-	public GeoSucker(Context c) {
-		super(c);
+	public GeoSucker(InformaService is) {
+		super(is);
 		setSucker(this);
 		
-		lm = (LocationManager) c.getSystemService(Context.LOCATION_SERVICE);
+		lm = (LocationManager) is.getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
 		
 		if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
 			lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
@@ -44,7 +46,7 @@ public class GeoSucker extends SensorLogger implements LocationListener {
 					double[] loc = updateLocation();
 					try {
 						if (loc != null)
-							sendToBuffer(jPack(Suckers.Geo.Keys.GPS_COORDS, "[" + loc[0] + "," + loc[1] + "]"));
+							sendToBuffer(new LogPack(Suckers.Geo.Keys.GPS_COORDS, "[" + loc[0] + "," + loc[1] + "]"));
 					} catch (JSONException e) {
 						Log.e(Suckers.LOG,"location json error",e);
 					} catch(NullPointerException e) {
@@ -57,16 +59,9 @@ public class GeoSucker extends SensorLogger implements LocationListener {
 		getTimer().schedule(getTask(), 0, Suckers.Geo.LOG_RATE);
 	}
 	
-	public JSONObject forceReturn() {
+	public LogPack forceReturn() {
 		double[] loc = updateLocation();
-		try {
-			if (loc != null)
-				return jPack(Suckers.Geo.Keys.GPS_COORDS, "[" + loc[0] + "," + loc[1] + "]");
-			else
-				return null;
-		} catch(JSONException e){
-			return null;
-		}
+		return new LogPack(Suckers.Geo.Keys.GPS_COORDS, "[" + loc[0] + "," + loc[1] + "]");
 	}
 	
 	private double[] updateLocation() {

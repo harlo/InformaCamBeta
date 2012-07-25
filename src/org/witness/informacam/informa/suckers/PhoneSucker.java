@@ -6,6 +6,8 @@ import java.util.TimerTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.witness.informacam.informa.InformaService;
+import org.witness.informacam.informa.LogPack;
 import org.witness.informacam.informa.SensorLogger;
 import org.witness.informacam.utils.Constants.Suckers;
 
@@ -24,11 +26,11 @@ public class PhoneSucker extends SensorLogger {
 	boolean hasBluetooth = false;
 	
 	@SuppressWarnings("unchecked")
-	public PhoneSucker(Context c) {
-		super(c);
+	public PhoneSucker(InformaService is) {
+		super(is);
 		setSucker(this);
 				
-		tm = (TelephonyManager) c.getSystemService(Context.TELEPHONY_SERVICE);
+		tm = (TelephonyManager) is.getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
 		ba = BluetoothAdapter.getDefaultAdapter();
 		
 		if(ba != null)
@@ -51,7 +53,7 @@ public class PhoneSucker extends SensorLogger {
 			public void run() throws NullPointerException {
 				if(getIsRunning()) {
 					try {
-						sendToBuffer(jPack(Suckers.Phone.Keys.CELL_ID, getCellId()));
+						sendToBuffer(new LogPack(Suckers.Phone.Keys.CELL_ID, getCellId()));
 						
 						// find other bluetooth devices around
 						if(hasBluetooth && !ba.isDiscovering())
@@ -96,21 +98,13 @@ public class PhoneSucker extends SensorLogger {
 		return wifi;
 	}
 	
-	public JSONObject forceReturn() {
-		try {
-			JSONObject fr = new JSONObject();
-			fr.put(Suckers.Phone.Keys.IMEI, getIMEI());
-			fr.put(Suckers.Phone.Keys.BLUETOOTH_DEVICE_ADDRESS, ba.getAddress());
-			fr.put(Suckers.Phone.Keys.BLUETOOTH_DEVICE_NAME, ba.getName());
-			fr.put(Suckers.Phone.Keys.CELL_ID, getCellId());
-			return fr;
-		} catch (JSONException e) {
-			return null;
-		}
-		catch(NullPointerException e) {
-			return null;
-		}
+	public LogPack forceReturn() throws JSONException {
+		LogPack fr = new LogPack(Suckers.Phone.Keys.IMEI, getIMEI());
+		fr.put(Suckers.Phone.Keys.BLUETOOTH_DEVICE_ADDRESS, ba.getAddress());
+		fr.put(Suckers.Phone.Keys.BLUETOOTH_DEVICE_NAME, ba.getName());
+		fr.put(Suckers.Phone.Keys.CELL_ID, getCellId());
 		
+		return fr;
 	}
 	
 	public void stopUpdates() {

@@ -12,7 +12,9 @@ import org.json.JSONObject;
 import org.witness.informacam.crypto.SignatureUtility;
 import org.witness.informacam.utils.Constants.Suckers;
 
+import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 
 public class SensorLogger<T> {
 	public T _sucker;
@@ -25,15 +27,17 @@ public class SensorLogger<T> {
 	File mLog;
 	JSONArray mBuffer;
 	
-	boolean isRunning, canBeCleared;
+	InformaService is;
 	
-	public static Context _c;
+	boolean isRunning;
+		
+	public interface OnSuckerUpdateListener {
+		public void onSuckerUpdate(long timestamp, LogPack logPack);
+	}
 	
-	public SensorLogger(Context c) {
-		_c = c;
-		mBuffer = new JSONArray();
+	public SensorLogger(InformaService is) {
+		this.is = is;
 		isRunning = true;
-		canBeCleared = true;
 	}
 	
 	public T getSucker() {
@@ -74,14 +78,6 @@ public class SensorLogger<T> {
 			mTimer.cancel();
 	}
 	
-	public void lockLog() {
-		canBeCleared = false;
-	}
-	
-	public void unlockLog() {
-		canBeCleared = true;
-	}
-	
 	public boolean getIsRunning() {
 		return isRunning;
 	}
@@ -92,41 +88,16 @@ public class SensorLogger<T> {
 		return logged;
 	}
 	
-	public JSONObject returnCurrent() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, JSONException {
-		JSONObject current = new JSONObject();
-		// TODO: sign this data and append signature? maybe...
-		
+	public LogPack forceReturn() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, JSONException {
 		if(_sucker.getClass().getDeclaredMethod("forceReturn", null) != null) {
 			Method fr = _sucker.getClass().getDeclaredMethod("forceReturn", null);
-			current = (JSONObject) fr.invoke(_sucker, null);
-			current.put(Suckers.Keys.SIGNATURE, SignatureUtility.getInstance().signData(current.toString().getBytes()));
-		} else {
-			current = null;
+			return (LogPack) fr.invoke(_sucker, null);
 		}
 		
-		return current;
+		return null;
 	}
 
-	public void sendToBuffer(JSONObject logItem) throws JSONException {
-		if(mBuffer.length() > 100 && canBeCleared) {
-			mBuffer = null;
-			mBuffer = new JSONArray();
-		}
-		
-		logItem.put(Suckers.Keys.TIMESTAMP, System.currentTimeMillis());
-		mBuffer.put(logItem);
-		//Log.d(InformaConstants.SUCKER_TAG, "logged: " + logItem.toString());
-	}
-	
-	public JSONObject jPack(String key, Object val) throws JSONException {
-		JSONObject item = new JSONObject();
-		
-		try {
-			item.put(key, val.toString());
-		} catch(NullPointerException e) {
-			item.put(key, "");
-		}
-
-		return item;
+	public void sendToBuffer(LogPack logPack) throws JSONException {
+		((OnSuckerUpdateListener) is).onSuckerUpdate(System.currentTimeMillis(), logPack); 
 	}
 }

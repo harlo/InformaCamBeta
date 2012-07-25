@@ -12,6 +12,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import org.witness.informacam.R;
 import org.witness.informacam.app.Eula.OnEulaAgreedTo;
 import org.witness.informacam.app.MainRouter.OnRoutedListener;
+import org.witness.informacam.crypto.SignatureUtility;
 import org.witness.informacam.informa.InformaService;
 import org.witness.informacam.informa.InformaService.LocalBinder;
 import org.witness.informacam.utils.Constants.App;
@@ -101,6 +102,8 @@ public class MainActivity extends Activity implements OnEulaAgreedTo, OnClickLis
     	if(!dumpFolder.exists())
     		dumpFolder.mkdir();
     	*/
+    	SignatureUtility signatureUtility = new SignatureUtility(MainActivity.this);
+    	
     	Intent launchInformaService = new Intent(this, InformaService.class);
 		bindService(launchInformaService, sc, Context.BIND_AUTO_CREATE);
     }
