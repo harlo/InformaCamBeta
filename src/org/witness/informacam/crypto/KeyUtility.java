@@ -1,7 +1,10 @@
 package org.witness.informacam.crypto;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -12,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.SignatureException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
@@ -19,18 +23,26 @@ import java.util.concurrent.ExecutionException;
 import net.sqlcipher.database.SQLiteDatabase;
 
 import org.apache.http.client.ClientProtocolException;
+import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.CompressionAlgorithmTags;
 import org.bouncycastle.bcpg.HashAlgorithmTags;
 import org.bouncycastle.bcpg.PublicKeyAlgorithmTags;
 import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags;
 import org.bouncycastle.bcpg.sig.KeyFlags;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openpgp.PGPCompressedDataGenerator;
 import org.bouncycastle.openpgp.PGPException;
+import org.bouncycastle.openpgp.PGPLiteralData;
+import org.bouncycastle.openpgp.PGPLiteralDataGenerator;
+import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSecretKey;
+import org.bouncycastle.openpgp.PGPSecretKeyRing;
+import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSignature;
+import org.bouncycastle.openpgp.PGPSignatureGenerator;
 import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator;
 import org.bouncycastle.openpgp.PGPUtil;
 import org.bouncycastle.util.encoders.Hex;
@@ -59,6 +71,26 @@ import android.util.Log;
 public class KeyUtility {
 	public interface KeyFoundListener {
 		public void onKeyFound(KeyServerResponse keyServerResponse);
+	}
+	
+	public static PGPSecretKey extractSecretKey(byte[] keyblock) {
+		PGPSecretKey secretKey = null;
+		try {
+			PGPSecretKeyRingCollection pkrc = new PGPSecretKeyRingCollection(PGPUtil.getDecoderStream(new ByteArrayInputStream(keyblock)));
+			Iterator<PGPSecretKeyRing> rIt = pkrc.getKeyRings();
+			while(rIt.hasNext()) {
+				PGPSecretKeyRing pkr = (PGPSecretKeyRing) rIt.next();
+				Iterator<PGPSecretKey> kIt = pkr.getSecretKeys();
+				while(secretKey == null && kIt.hasNext()) {
+					secretKey = kIt.next();
+				}
+			}
+			return secretKey;
+		} catch(IOException e) {
+			return null;
+		} catch(PGPException e) {
+			return null;
+		}
 	}
 	
 	public final static class KeyServerResponse extends JSONObject {
@@ -300,5 +332,76 @@ public class KeyUtility {
 		db.close();
 		dh.close();
 		return false;
+	}
+	
+	public static String applySignature(byte[] data, PGPSecretKey secretKey, PGPPublicKey publicKey, PGPPrivateKey privateKey) {
+		int buffSize = 1 <<16;
+		BouncyCastleProvider bc = new BouncyCastleProvider();
+		
+		Security.addProvider(bc);
+		
+		ByteArrayInputStream bais = new ByteArrayInputStream(data);
+    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    	
+    	try {
+    		OutputStream targetOut = new ArmoredOutputStream(baos);
+    		
+    		PGPCompressedDataGenerator cdGen = new PGPCompressedDataGenerator(CompressionAlgorithmTags.ZIP);
+    		OutputStream compressedOut = cdGen.open(targetOut, new byte[buffSize]);
+    		
+			PGPSignatureGenerator sGen = new PGPSignatureGenerator(publicKey.getAlgorithm(), PGPUtil.SHA1, bc);
+			sGen.initSign(PGPSignature.BINARY_DOCUMENT, privateKey);
+			Iterator<String> uId = secretKey.getUserIDs();
+			while(uId.hasNext()) {
+				String userId = (String) uId.next();
+				
+				PGPSignatureSubpacketGenerator spGen = new PGPSignatureSubpacketGenerator();
+				spGen.setSignerUserID(false, userId);
+				sGen.setHashedSubpackets(spGen.generate());
+				
+				// we only need the first userId
+				break;
+			}
+			sGen.generateOnePassVersion(false).encode(compressedOut);
+			
+			PGPLiteralDataGenerator ldGen = new PGPLiteralDataGenerator();
+			OutputStream literalOut = ldGen.open(compressedOut, PGPLiteralData.BINARY, PGPLiteralData.CONSOLE, new Date(System.currentTimeMillis()), new byte[buffSize]);
+			
+			byte[] buf = new byte[buffSize];
+			int read;
+			
+			while((read = bais.read(buf, 0, buf.length)) > 0) {
+				literalOut.write(buf, 0, read);
+				sGen.update(buf, 0, read);
+			}
+			
+			literalOut.close();
+			ldGen.close();
+			
+			sGen.generate().encode(compressedOut);
+			compressedOut.close();
+			cdGen.close();
+			
+			bais.close();
+			
+			targetOut.close();
+			return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+		} catch (NoSuchAlgorithmException e) {
+			Log.e(Crypto.LOG, e.toString());
+			e.printStackTrace();
+		} catch (PGPException e) {
+			Log.e(Crypto.LOG, e.toString());
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			Log.e(Crypto.LOG, e.toString());
+			e.printStackTrace();
+		} catch (IOException e) {
+			Log.e(Crypto.LOG, e.toString());
+			e.printStackTrace();
+		} catch (SignatureException e) {
+			Log.e(Crypto.LOG, e.toString());
+			e.printStackTrace();
+		}
+    	return null;
 	}
 }

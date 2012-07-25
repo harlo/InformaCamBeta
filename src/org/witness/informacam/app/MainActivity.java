@@ -1,17 +1,21 @@
 package org.witness.informacam.app;
 
+import info.guardianproject.iocipher.File;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import info.guardianproject.iocipher.File;
 import net.sqlcipher.database.SQLiteDatabase;
 
 import org.witness.informacam.R;
 import org.witness.informacam.app.Eula.OnEulaAgreedTo;
 import org.witness.informacam.app.MainRouter.OnRoutedListener;
+import org.witness.informacam.informa.InformaService;
+import org.witness.informacam.informa.InformaService.LocalBinder;
 import org.witness.informacam.utils.Constants.App;
+import org.witness.informacam.utils.Constants.Informa;
 import org.witness.informacam.utils.Constants.Storage;
 import org.witness.informacam.utils.InformaMediaScanner;
 import org.witness.informacam.utils.InformaMediaScanner.OnMediaScannedListener;
@@ -19,13 +23,17 @@ import org.witness.informacam.utils.InformaMediaScanner.OnMediaScannedListener;
 import com.xtralogic.android.logcollector.SendLogActivity;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -48,6 +56,20 @@ public class MainActivity extends Activity implements OnEulaAgreedTo, OnClickLis
     
     Handler h;
     
+    InformaService informaService = null;
+    
+    private ServiceConnection sc = new ServiceConnection() {
+    	public void onServiceConnected(ComponentName cn, IBinder binder) {
+    		LocalBinder lb = (LocalBinder) binder;
+    		informaService = lb.getService();
+    		informaService.setCurrentStatus(Informa.Status.RUNNING);
+    	}
+    	
+    	public void onServiceDisconnected(ComponentName cn) {
+    		informaService = null;
+    	}
+    };
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,20 +90,31 @@ public class MainActivity extends Activity implements OnEulaAgreedTo, OnClickLis
     	if(!eula.getBoolean(Eula.PREFERENCE_EULA_ACCEPTED, false)) {
     		boolean eulaChoice = Eula.show(this);
     		if(eulaChoice)
-    			initInformaCam();
+    			onEulaAgreedTo();
     	} else
     		onEulaAgreedTo();
     }
     
     private void initInformaCam() {
-    	
+    	/*
+    	File dumpFolder = new File(Storage.FileIO.DUMP_FOLDER);
+    	if(!dumpFolder.exists())
+    		dumpFolder.mkdir();
+    	*/
+    	Intent launchInformaService = new Intent(this, InformaService.class);
+		bindService(launchInformaService, sc, Context.BIND_AUTO_CREATE);
+    }
+    
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	if(informaService != null)
+    		doShutdown();
     }
     
     @Override
     public void onEulaAgreedTo() {
-    	boolean routerRes = MainRouter.show(this);
-    	if(routerRes)
-    		initInformaCam();
+    	MainRouter.show(this);
     }
     
     private void initLayout() {
@@ -256,7 +289,11 @@ public class MainActivity extends Activity implements OnEulaAgreedTo, OnClickLis
 
 	@Override
 	public void onRouted() {
-		// TODO Auto-generated method stub
+		initInformaCam();
 		
+	}
+	
+	private void doShutdown() {
+		unbindService(sc);
 	}
 }

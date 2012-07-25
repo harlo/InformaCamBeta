@@ -60,4 +60,10 @@
 	    <item>Refresh Key</item>
 	    <item>Delete Contact</item>
 	</string-array>
+	
+	<string-array name="informa_statuses">
+	    <item>InformaCam running</item>
+	    <item>InformaCam stopped</item>
+	    <item>Uploading media\u2026</item>
+	</string-array>
 </resources>

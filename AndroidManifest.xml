@@ -58,6 +58,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        
+        <service android:name=".informa.InformaService" android:enabled="true" />
+        <service android:name=".transport.UploaderService" android:enabled="true" />
     </application>
 
 </manifest>

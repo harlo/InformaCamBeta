@@ -34,6 +34,19 @@ public class Constants {
 			public final static int FROM_ASC_IMPORT = 675;
 			public final static int FROM_USER_CHOICE = 676;
 		}
+		
+		public final static class ImageEditor {
+			public final static int FROM_ANNOTATION_ACTIVITY = 574;
+			public final static int FROM_DESTINATION_CHOOSER = 575;
+			
+			public final static class Actions {
+				public final static int REVIEW_MEDIA = 0;
+			}
+			
+			public final static class Keys {
+				public final static String PROPERTIES = "mProps";
+			}
+		}
 	}
 	
 	public final static class Mods {
@@ -103,10 +116,15 @@ public class Constants {
 			public final static String ALIAS = "mediaAlias";
 		}
 		
+		public static final String EXPORT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+		
 		public final static class Type {
 			public final static String MP4 = ".mp4";
 			public final static String MKV = ".mkv";
 			public final static String JEPG = ".jpg";
+			public final static String MIME_TYPE_JPEG = "image/jpeg";
+			public final static String MIME_TYPE_MP4 = "video/mp4";
+			public final static String MIME_TYPE_MKV = "video/mkv";
 		}
 	}
 	
@@ -153,10 +171,9 @@ public class Constants {
 	public final static class Suckers {
 		public static final String LOG = "**************** InformaCam:Suckers ****************";
 		
-		public final static class LogRate {
-			public final static long ACC = 500L;
-			public final static long PHONE = 5000L;
-			public final static long GEO = 10000L;
+		public static final class Keys {
+			public static final String SIGNATURE = Crypto.Signatures.Keys.SIGNATURE;
+			public static final String TIMESTAMP = Informa.Keys.CaptureEvent.TIMESTAMP;
 		}
 		
 		public static final class Broadcasts {
@@ -164,10 +181,55 @@ public class Constants {
 			public final static String LOCK_LOGS = "lockLogs";
 			public final static String UNLOCK_LOGS = "unlockLogs";
 		}
+		
+		public static final class Accelerometer {
+			public final static long LOG_RATE = 500L;
+			
+			public static final class Keys {
+				public static final String ACC = "acc";
+				public static final String ORIENTATION = "orientation";
+				public static final String LIGHT = "light";
+				public static final String LIGHT_METER_VALUE = "lightMeterValue";
+				public static final String X = "acc_x";
+				public static final String Y = "acc_y";
+				public static final String Z = "acc_z";
+				public static final String PITCH = "pitch";
+				public static final String ROLL = "roll";
+				public static final String AZIMUTH = "azimuth";
+			}
+		}
+		
+		public static final class Phone {
+			public final static long LOG_RATE = 5000L;
+			
+			public static final class Keys {
+				public static final String CELL_ID = "cellTowerId";
+				public static final String BLUETOOTH_DEVICE_ADDRESS = "bluetoothDeviceAddress";
+				public static final String BLUETOOTH_DEVICE_NAME = "bluetoothDeviceName";
+				public static final String IMEI = "IMEI";
+				
+			}
+		}
+		
+		public static final class Geo {
+			public final static long LOG_RATE = 10000L;
+			
+			public static final class Keys {
+				public static final String GPS_COORDS = "gps_coords";
+			}
+		}
 	}
 	
 	public final static class Informa {
 		public static final String LOG = "**************** InformaCam:Informa ****************";
+		
+		public final static int FROM_NOTIFICATION_BAR = 1074;
+		
+		public final static class Status {
+			public final static int RUNNING = 0;
+			public final static int STOPPED = 1;
+			public final static int UPLOADING = 2;
+		}
 		
 		public final static class Consent {
 			public final static int GENERAL = 101;
@@ -200,6 +262,7 @@ public class Constants {
 			public final static String INTENT = "intent";
 			public final static String GENEALOGY = "genealogy";
 			public final static String DATA = "data";
+			public static final int NOT_REPORTED = -100;
 			
 			public static final class CaptureEvent {
 				public final static String TYPE = "captureEventType";
@@ -211,6 +274,7 @@ public class Constants {
 			
 			public static final class Intent {
 				public final static String TRUSTED_DESTINATION = TrustedDestination.Keys.EMAIL;
+				public static final String ENCRYPT_LIST = "encryptionList";
 			}
 			
 			public static final class Genealogy {
@@ -257,6 +321,9 @@ public class Constants {
 					public final static String WHITE_BALANCE = ExifInterface.TAG_WHITE_BALANCE;
 					public final static String TIMESTAMP = ExifInterface.TAG_DATETIME;
 					public final static String DURATION = "duration";
+					public static final String TITLE = "title";
+					public static final String DESCRIPTION = "description";
+					
 				}
 				
 				public static final class ImageRegion {
@@ -332,6 +399,13 @@ public class Constants {
 			public final static String IMAGE_TMP = "informa_tmp.jpg";
 			public final static String VIDEO_TMP = "informa_tmp.mp4";
 		}
+		
+		public final static class IOCipher {
+			private final static String LOCALHOST = "127.0.0.1";
+			private final static int DEFAULT_PORT = 8443;
+			private boolean USE_SSL = true;
+			private boolean RUN_ON_BIND = true;
+		}
 	}
 	
 	public final static class Uploader {
@@ -345,6 +419,12 @@ public class Constants {
 	
 	public final static class Crypto {
 		public static final String LOG = "**************** InformaCam:Crypto ****************";
+		
+		public final static class Signatures {
+			public final static class Keys {
+				public final static String SIGNATURE = "dataSignature";
+			}
+		}
 		
 		public final static class Keyring {
 			public final static class Keys {

@@ -30,6 +30,51 @@
     <string name="mainactivity_log_out">Log Out</string>
     <string name="mainactivity_log_in">Log In</string>
     
+    <!--  IMAGE/VIDEO EDITORS -->
+    <string name="menu_this_image">This Image\u2026</string>
+    <string name="menu_new_region">New Tag</string>
+    <string name="menu_detect">Detect Faces</string>    
+    <string name="menu_panic">Panic</string>
+ 	<string name="menu_image_prefs">Image Prefs</string>
+    <string name="menu_save">Save</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_send_hash">Send Hash</string>
+    <string name="menu_prefs">Preferences</string>
+    <string name="menu_clear_regions">Clear All Regions</string>
+    <string name="menu_region_pixelate">Pixelate</string>
+    <string name="menu_region_crowd_pixelate">Pixelate Background</string>
+    <string name="menu_region_redact">Redact</string>
+    <string name="menu_region_identify">Identify</string>
+    <string name="menu_region_delete">Delete</string>
+    <string name="menu_minimize">Hide Menu</string>
+    <string name="menu_hide_hints">Show/Hide Hints</string>
+    <string name="welcomeSubMsg">now with video!</string>
+    <string name="menu_delete_original">Delete Original</string>
+    <string name="menu_preview">Preview</string>
+    <string name="play_video">Play Video</string>
+    <string name="share_video">Share Video</string>
+    
+    <string name="pref_out_fps_title">Output Framerate (fps)</string>
+    <string name="pref_out_fps_summary">Frames per second to save output video at (15-30)</string>
+    
+    <string name="pref_out_rate_title">Output Bitrate (kbps)</string>
+    <string name="pref_out_rate_summary">Bitrate of video output (300-1500)</string>
+    
+    <string name="pref_out_format_title">Output Format</string>
+    <string name="pref_out_format_summary">File container format (mp4, 3gp, ogg)</string>
+    
+     <string name="pref_out_vcodec_title">Output Video Codec</string>
+    <string name="pref_out_vcodec_summary">video codec (copy, libx264, etc)</string>
+    
+     <string name="pref_out_acodec_title">Output Audio Codec</string>
+    <string name="pref_out_acodec_summary">audio codec (copy, aac, mp3, etc)</string>
+    
+    <string name="pref_out_vwidth_title">Custom Video Width (px)</string>
+    <string name="pref_out_vwidth_summary">custom video width for outputed video</string>
+    
+     <string name="pref_out_vheight_title">Custom Video Height (px)</string>
+    <string name="pref_out_vheight_summary">custom video height for outputed video</string>
+    
     <!--  ERRORS -->
     <string name="error_media_mounted">Please insert an SD card to save media!</string>
     <string name="error_no_key_found_for_email">Sorry!  No public key found for </string>
@@ -48,7 +93,6 @@
     <string name="address_book_fingerprint">Fingerprint:</string>
     <string name="address_book_creation_date">Created on:</string>
     <string name="address_book_expiry_date">Expires on:</string>
-    
     
 	<!--  LOG IN ACTIVITY -->
 	<string name="login">Log In</string>
