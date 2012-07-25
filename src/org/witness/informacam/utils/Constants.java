@@ -31,6 +31,8 @@ public class Constants {
 		
 		public final static class AddressBook {
 			public final static int FROM_CONTACT_CHOOSER = 674;
+			public final static int FROM_ASC_IMPORT = 675;
+			public final static int FROM_USER_CHOICE = 676;
 		}
 	}
 	
@@ -42,6 +44,16 @@ public class Constants {
 	}
 	
 	public final static class AddressBook {
+		public final static class Projections {
+			public final static String[] LIST_DISPLAY = TrustedDestination.Projections.FOR_ADDRESSBOOK_DISPLAY;
+		}
+		
+		public final static class Actions {
+			public final static int VIEW_DETAILS = 0;
+		    public final static int REFRESH_KEY = 1;
+		    public final static int DELETE_CONTACT = 2;
+		}
+		
 		public final static class Keys {
 			public final static String CONTACT_PHOTO = "contactPhoto";
 			public final static String CONTACT_NAME = "contactName";
@@ -51,11 +63,24 @@ public class Constants {
 	}
 	
 	public final static class TrustedDestination {
+		public final static class Projections {
+			public final static String[] FOR_ADDRESSBOOK_DISPLAY = {
+				TrustedDestination.Keys.DISPLAY_NAME,
+				TrustedDestination.Keys.EMAIL,
+				TrustedDestination.Keys.CONTACT_PHOTO,
+				TrustedDestination.Keys.KEYRING_ID,
+				TrustedDestination.Keys.IS_DELETABLE,
+				BaseColumns._ID
+			};
+		}
+		
 		public final static class Keys {
 			public final static String EMAIL = "trustedDestinationEmail";
 			public final static String KEYRING_ID = Crypto.Keyring.Keys.ID;
 			public final static String URL = "trustedDestinationURL";
 			public final static String DISPLAY_NAME = "trustedDestinationDisplayName";
+			public final static String CONTACT_PHOTO = AddressBook.Keys.CONTACT_PHOTO;
+			public final static String IS_DELETABLE = "trustedDestinationIsDeletable";
 		}
 	}
 	
@@ -95,14 +120,16 @@ public class Constants {
 			public final static String DEFAULT_IMAGE_HANDLING = "defaultImageHandling";
 			public final static String USE_ENCRYPTION = "useEncryption";
 			public final static String USE_PROXY = "useProxy";
+			public final static String DISPLAY_NAME = Informa.Keys.Owner.DISPLAY_NAME;
+			public final static String DEVICE_EMAIL = "ownerEmailAddress";
 		}
 		
 		public final static class Device {
 			public static final class Keys {
 				public final static String KEYRING_ID = Crypto.PGP.Keys.PGP_KEY_ID;
-				public final static String PRIVATE_KEY = "devicePrivateKey";
+				public final static String SECRET_KEY = "deviceSecretKey";
 				public final static String AUTH_KEY = "deviceAuthKey";
-				public final static String BASE_IMAGE_PATH = "deviceBaseImagePath";
+				public final static String BASE_IMAGE = "deviceBaseImage";
 			}
 		}
 		
@@ -324,7 +351,7 @@ public class Constants {
 				public final static String ID = PGP.Keys.PGP_KEY_ID;
 				public final static String PUBLIC_KEY = "trustedDestinationPublicKey";
 				public final static String FINGERPRINT = PGP.Keys.PGP_FINGERPRINT;
-				public final static String TRUSTED_DESTINATION_ID = BaseColumns._ID;
+				public final static String TRUSTED_DESTINATION_ID = "trustedDestinationId";
 			}
 		}
 		
@@ -336,6 +363,18 @@ public class Constants {
 		}
 		
 		public final static class PGP {
+			public final static String[] keyserverUrl = {
+				"http://keyserver.kjsl.org:11371/pks/lookup?op=get&search="
+			};
+			
+			public final static String[] beginKeyBlock = {
+				"-----BEGIN PGP PUBLIC KEY BLOCK-----"
+			};
+			
+			public final static String[] endKeyBlock = {
+				"-----END PGP PUBLIC KEY BLOCK-----"
+			};
+			
 			public static final class Keys {
 				public final static String PGP_KEY_ID = "pgpKeyId";
 				public final static String PGP_FINGERPRINT = "pgpKeyFingerprint";

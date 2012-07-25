@@ -44,6 +44,7 @@ public class MessageCenterActivity extends Activity implements OnClickListener, 
 
 	@Override
 	public void onRouted() {
+		h = new Handler();
 		h.post(new Runnable() {
 			@Override
 			public void run() {

@@ -6,6 +6,7 @@ import org.witness.informacam.utils.Constants.Crypto;
 import org.witness.informacam.utils.Constants.Informa;
 import org.witness.informacam.utils.Constants.Media;
 import org.witness.informacam.utils.Constants.Settings;
+import org.witness.informacam.utils.Constants.Crypto.PGP;
 import org.witness.informacam.utils.Constants.Storage.Tables;
 import org.witness.informacam.utils.Constants.TrustedDestination;
 
@@ -46,7 +47,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 					TrustedDestination.Keys.DISPLAY_NAME + " text, " +
 					TrustedDestination.Keys.EMAIL + " text, " +
 					TrustedDestination.Keys.KEYRING_ID + " integer, " +
-					TrustedDestination.Keys.URL + " text" +
+					TrustedDestination.Keys.URL + " text, " +
+					TrustedDestination.Keys.IS_DELETABLE + " integer, " +
+					TrustedDestination.Keys.CONTACT_PHOTO + " blob" +
 					")",
 					"CREATE TABLE " + Tables.Keys.SETUP + " (" + BaseColumns._ID + " " +
 					"integer primary key autoincrement," +
@@ -54,15 +57,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 					Informa.Keys.Device.PUBLIC_TIMESTAMP + " integer, " +
 					Informa.Keys.Device.DISPLAY_NAME + " text, " +
 					Settings.Device.Keys.KEYRING_ID + " integer, " +
-					Settings.Device.Keys.PRIVATE_KEY + " blob, " + 
+					Settings.Device.Keys.SECRET_KEY + " blob, " + 
 					Settings.Device.Keys.AUTH_KEY + " text, " + 
-					Settings.Device.Keys.BASE_IMAGE_PATH + " text" +
+					Settings.Device.Keys.BASE_IMAGE + " text" +
 					")",
 					"CREATE TABLE " + Tables.Keys.KEYRING + " (" + BaseColumns._ID + " " +
 					"integer primary key autoincrement," +
 					Crypto.Keyring.Keys.ID + " integer, " +
 					Crypto.Keyring.Keys.PUBLIC_KEY + " blob, " +
 					Crypto.Keyring.Keys.FINGERPRINT + " text, " +
+					PGP.Keys.PGP_CREATION_DATE + " integer, " +
+					PGP.Keys.PGP_EXPIRY_DATE + " integer, " +
+					PGP.Keys.PGP_DISPLAY_NAME + " text, " +
+					PGP.Keys.PGP_EMAIL_ADDRESS + " text, " +
 					Crypto.Keyring.Keys.TRUSTED_DESTINATION_ID + " integer" +
 					")",
 					"CREATE TABLE " + Tables.Keys.KEYSTORE + " (" + BaseColumns._ID + " " +

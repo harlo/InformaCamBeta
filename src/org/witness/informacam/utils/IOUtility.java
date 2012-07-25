@@ -6,11 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import org.bouncycastle.util.encoders.Base64;
 import org.witness.informacam.utils.Constants.App;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -20,6 +22,15 @@ public class IOUtility {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
 		return baos.toByteArray();
+	}
+	
+	public final static Bitmap getBitmapFromBytes(byte[] bytes, boolean isBase64) {
+		byte[] b = bytes;
+		if(isBase64)
+			b = Base64.decode(bytes);
+		
+		return BitmapFactory.decodeByteArray(b, 0, b.length);
+		
 	}
 	
 	public final static byte[] getBytesFromFile(File file) {

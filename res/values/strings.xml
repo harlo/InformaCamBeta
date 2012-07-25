@@ -32,13 +32,23 @@
     
     <!--  ERRORS -->
     <string name="error_media_mounted">Please insert an SD card to save media!</string>
+    <string name="error_no_key_found_for_email">Sorry!  No public key found for </string>
+    <string name="error_cannot_delete_contact">This contact cannot be deleted.</string>
     
     <!--  ADDRESS BOOK AND CHOOSER -->
     <string name="address_book_new_contact">Add new contact\u2026</string>
     <string name="address_book_directions">You can add a new contact by either typing in the email address, picking from your contact list, or by importing a public key (.asc) from storage.</string>
-    <string name="address_book_pick_from_contacts">Pick from contacts</string>
-    <string name="address_book_enter_email_address">Enter email address</string>
+    <string name="address_book_pick_from_contacts">Pick contact</string>
+    <string name="address_book_enter_email_address">email@example.com</string>
     <string name="address_book_import_key">Import Key</string>
+    <string name="address_book_multiple_email">Multiple email addresses were found for this contact.  Which one would you like to use?</string>
+    <string name="address_book_querying_keyserver_wait">Querying keyservers\u2026</string>
+    <string name="address_book_keyserver_result">Would you like to add the following key to your Address Book?\n\nPLEASE CHECK THE FINGERPRINT BEFORE ADDING!</string>
+    <string name="address_book_email">Email:</string>
+    <string name="address_book_fingerprint">Fingerprint:</string>
+    <string name="address_book_creation_date">Created on:</string>
+    <string name="address_book_expiry_date">Expires on:</string>
+    
     
 	<!--  LOG IN ACTIVITY -->
 	<string name="login">Log In</string>

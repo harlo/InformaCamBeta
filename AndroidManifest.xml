@@ -39,6 +39,7 @@
             android:theme="@style/Theme.CustomDialog"
             android:configChanges="orientation|keyboardHidden" />
         <activity android:name=".app.AddressBookChooserActivity"
+            android:configChanges="orientation|keyboardHidden"
             android:theme="@style/Theme.CustomDialog" />
         
         

@@ -1,17 +1,15 @@
 package org.witness.informacam.app.mods;
 
-import org.json.JSONObject;
-
 public class Selections {
 	public String _optionValue;
 	boolean _selected;
-	private JSONObject _extras;
+	private Object _extras;
 	
 	public Selections(String optionValue, boolean selectDefault) {
 		this(optionValue, selectDefault, null);
 	}
 	
-	public Selections(String optionValue, boolean selectDefault, JSONObject extras) {
+	public Selections(String optionValue, boolean selectDefault, Object extras) {
 		_optionValue = optionValue;
 		_selected = selectDefault;
 		_extras = extras;
@@ -25,7 +23,7 @@ public class Selections {
 		_selected = selected;
 	}
 	
-	public JSONObject getExtras() {
+	public Object getExtras() {
 		return _extras;
 	}
 }

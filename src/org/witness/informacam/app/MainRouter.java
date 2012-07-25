@@ -19,9 +19,8 @@ class MainRouter {
 		
 		if(!preferences.getBoolean(Settings.Keys.SETTINGS_VIEWED, false)) {
 			Log.d(App.LOG, "virgin user, EULA accepted. launching wizard");
-			//Intent intent = new Intent(activity, WizardActivity.class);
-			//activity.startActivity(intent);
-			
+			Intent intent = new Intent(activity, WizardActivity.class);
+			activity.startActivity(intent);
 			return false;
 		} else if(preferences.getString(Settings.Keys.CURRENT_LOGIN, "").compareTo(Settings.Login.PW_EXPIRY) == 0) {
 			Log.d(App.LOG, "user\'s password expired.  must log in again.");

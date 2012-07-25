@@ -12,6 +12,13 @@ import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -32,26 +39,44 @@ import android.content.Context;
 import android.util.Log;
 
 public class HttpUtility {
-	public static String executeHttpGet(String url, boolean proxy) throws URISyntaxException, ClientProtocolException, IOException {		
-		HttpClient client = new DefaultHttpClient();
-		
-		if(proxy) {
-			HttpHost host = new HttpHost("localhost", 8118);
-			client.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, host);
-		}
-		
-		HttpGet request = new HttpGet();
-		request.setURI(new URI(url));
-		HttpResponse res = client.execute(request);
-		
-		BufferedReader br = new BufferedReader(new InputStreamReader(res.getEntity().getContent()));
-		StringBuffer sb = new StringBuffer();
-		String line = "";
-		while((line = br.readLine()) != null)
-			sb.append(line + "\r\n");
-		br.close();
+	
+	public static String executeHttpGet(String url) throws ClientProtocolException, URISyntaxException, IOException, InterruptedException, ExecutionException {
+		return HttpUtility.executeHttpGet(url, false);
+	}
+	
+	public static String executeHttpGet(final String url, final boolean proxy) throws URISyntaxException, ClientProtocolException, IOException, InterruptedException, ExecutionException {
+		ExecutorService ex = Executors.newFixedThreadPool(100);
+		Future<String> future = ex.submit(new Callable<String>() {
+
+			@Override
+			public String call() throws Exception {
+				HttpClient client = new DefaultHttpClient();
 				
-		return sb.toString();
+				if(proxy) {
+					HttpHost host = new HttpHost("localhost", 8118);
+					client.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, host);
+				}
+				
+				HttpGet request = new HttpGet();
+				request.setURI(new URI(url));
+				HttpResponse res = client.execute(request);
+				
+				BufferedReader br = new BufferedReader(new InputStreamReader(res.getEntity().getContent()));
+				StringBuffer sb = new StringBuffer();
+				String line = "";
+				while((line = br.readLine()) != null)
+					sb.append(line + "\r\n");
+				br.close();
+						
+				return sb.toString();
+			}
+			
+		});
+		
+		String res = future.get();
+		ex.shutdown();
+		
+		return res;
 	}
 	
 	public static HttpsURLConnection initHttpsConnection(Context c, String urlString, boolean useProxy) {

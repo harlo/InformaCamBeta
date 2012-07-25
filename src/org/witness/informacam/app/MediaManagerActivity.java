@@ -44,6 +44,7 @@ public class MediaManagerActivity extends Activity implements OnClickListener, O
 
 	@Override
 	public void onRouted() {
+		h = new Handler();
 		h.post(new Runnable() {
 			@Override
 			public void run() {
