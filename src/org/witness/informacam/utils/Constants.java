@@ -39,12 +39,37 @@ public class Constants {
 			public final static int FROM_ANNOTATION_ACTIVITY = 574;
 			public final static int FROM_DESTINATION_CHOOSER = 575;
 			
+			public final static class Mode {
+				public static final int NONE = 0;
+				public static final int DRAG = 1;
+				public static final int ZOOM = 2;
+				public static final int TAP = 3;
+			}
+			
+			// Maximum zoom scale
+			public static final float MAX_SCALE = 10f;
+			public final static float CORNER_SIZE = 26;
+			
+			// Constant for autodetection dialog
+			public static final int DIALOG_DO_AUTODETECTION = 0;
+			public final static String MIME_TYPE_JPEG = Media.Type.MIME_TYPE_JPEG;
+			
+			public final static class Color {
+				public final static int DRAW_COLOR = 0x00000000;
+				public final static int DETECTED_COLOR = 0x00000000;
+				public final static int OBSCURED_COLOR = 0x00000000;
+			}
+			
 			public final static class Actions {
 				public final static int REVIEW_MEDIA = 0;
+				public final static int SAVE_MENU_ITEM = 1;
+				public final static int SHARE_MENU_ITEM = 2;
+				public final static int NEW_REGION_MENU_ITEM = 3;
 			}
 			
 			public final static class Keys {
 				public final static String PROPERTIES = "mProps";
+				
 			}
 		}
 	}
@@ -116,7 +141,10 @@ public class Constants {
 			public final static String ALIAS = "mediaAlias";
 		}
 		
-		public static final String EXPORT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+		public final static class DateFormats {
+			public static final String EXPORT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+			public static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
+		}
 		
 		public final static class Type {
 			public final static String MP4 = ".mp4";
@@ -173,7 +201,7 @@ public class Constants {
 		
 		public static final class Keys {
 			public static final String SIGNATURE = Crypto.Signatures.Keys.SIGNATURE;
-			public static final String TIMESTAMP = Informa.Keys.CaptureEvent.TIMESTAMP;
+			public static final String TIMESTAMP = Informa.CaptureEvent.Keys.TIMESTAMP;
 		}
 		
 		public static final class Broadcasts {
@@ -258,19 +286,27 @@ public class Constants {
 			}
 		}
 		
-		public static final class Keys {
-			public final static String INTENT = "intent";
-			public final static String GENEALOGY = "genealogy";
-			public final static String DATA = "data";
-			public static final int NOT_REPORTED = -100;
+		public final static class CaptureEvent {
+			public final static int MEDIA_OPENED = 273;
+			public final static int REGION_GENERATED = 274;
+			public final static int MEDIA_SAVED = 275;
 			
-			public static final class CaptureEvent {
+			public final static class Keys {
+				public final static String USER_ACTION = "userActionReported";
 				public final static String TYPE = "captureEventType";
 				public final static String MATCH_TIMESTAMP = "captureEventMatchTimestamp";
 				public final static String TIMESTAMP = "captureEventTimestamp";
 				public final static String ON_VIDEO_START = "timestampOnVideoStart";
 				public final static String MEDIA_CAPTURE_COMPLETE = "mediaCapturedComplete";
 			}
+		}
+		
+		public static final class Keys {
+			public final static String INTENT = "intent";
+			public final static String GENEALOGY = "genealogy";
+			public final static String DATA = "data";
+			public static final int NOT_REPORTED = -100;
+			
 			
 			public static final class Intent {
 				public final static String TRUSTED_DESTINATION = TrustedDestination.Keys.EMAIL;

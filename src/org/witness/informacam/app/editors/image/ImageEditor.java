@@ -2,52 +2,43 @@ package org.witness.informacam.app.editors.image;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.witness.informacam.R;
 import org.witness.informacam.app.DestinationChooserActivity;
 import org.witness.informacam.app.editors.image.detect.GoogleFaceDetection;
 import org.witness.informacam.app.editors.image.filters.RegionProcesser;
+import org.witness.informacam.informa.InformaService;
+import org.witness.informacam.informa.LogPack;
 import org.witness.informacam.utils.Constants;
 import org.witness.informacam.utils.Constants.App;
+import org.witness.informacam.utils.Constants.App.ImageEditor.Mode;
 import org.witness.informacam.utils.Constants.Informa;
+import org.witness.informacam.utils.Constants.Informa.CaptureEvent;
 import org.witness.informacam.utils.Constants.Storage;
 import org.witness.informacam.utils.Constants.Informa.Keys.Data.Exif;
+import org.witness.informacam.utils.Time;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
@@ -61,19 +52,15 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.PixelFormat;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Images.Media;
@@ -85,36 +72,14 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 public class ImageEditor extends Activity implements OnTouchListener, OnClickListener {
-
-
-	public final static String MIME_TYPE_JPEG = "image/jpeg";
-	
-	// Colors for region squares
-	
-	public final static int DRAW_COLOR = 0x00000000;
-	public final static int DETECTED_COLOR = 0x00000000;
-	public final static int OBSCURED_COLOR = 0x00000000;
-	
-	// Constants for the menu items, currently these are in an XML file (menu/image_editor_menu.xml, strings.xml)
-	public final static int ABOUT_MENU_ITEM = 0;
-	public final static int DELETE_ORIGINAL_MENU_ITEM = 1;
-	public final static int SAVE_MENU_ITEM = 2;
-	public final static int SHARE_MENU_ITEM = 3;
-	public final static int NEW_REGION_MENU_ITEM = 4;
-	
 	// Constants for Informa
-	public final static int FROM_INFORMA = 100;
-	public final static String LOG = "[Image Editor ********************]";
 	
 	// Image Matrix
 	Matrix matrix = new Matrix();
@@ -123,18 +88,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 	Matrix savedMatrix = new Matrix();
 		
 	// We can be in one of these 3 states
-	static final int NONE = 0;
-	static final int DRAG = 1;
-	static final int ZOOM = 2;
-	static final int TAP = 3;
-	int mode = NONE;
-
-	
-	// Maximum zoom scale
-	static final float MAX_SCALE = 10f;
-	
-	// Constant for autodetection dialog
-	static final int DIALOG_DO_AUTODETECTION = 0;
+	int mode = Mode.NONE;
 	
 	// For Zooming
 	float startFingerSpacing = 0f;
@@ -170,7 +124,6 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
     Paint obscuredPaint;
     
     //bitmaps for corners
-    private final static float CORNER_SIZE = 26;
     Bitmap bitmapCornerUL;
     Bitmap bitmapCornerUR;
     Bitmap bitmapCornerLL;
@@ -195,12 +148,6 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 	// Saved Image Uri
 	Uri savedImageUri;
 	
-	// Constant for temp filename
-	public final static String TMP_FILE_NAME = "tmp.jpg";
-	
-	public final static String TMP_FILE_DIRECTORY = "/Android/data/org.witness.sscphase1/files/";
-	
-	private long[] encryptList = new long[] {0L};
 	
 	//handles threaded events for the UI thread
     private Handler mHandler = new Handler()
@@ -216,9 +163,6 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
            case 3: //completed
    	    	mProgressDialog.dismiss();
    	    	 
-   	 		//Toast autodetectedToast = Toast.makeText(ImageEditor.this, result + " face(s) detected", Toast.LENGTH_SHORT);
-   	 		//autodetectedToast.show();	        			
-           	
            	break;
            default:
                super.handleMessage(msg);
@@ -234,30 +178,21 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
     boolean doRealtimePreview = true;
     
     // Keep track of the orientation
-    private int originalImageOrientation = ExifInterface.ORIENTATION_NORMAL;    
-
-    // for saving images
-    private final static String EXPORT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    private int originalImageOrientation = ExifInterface.ORIENTATION_NORMAL;
     
     SharedPreferences sp;
     int mediaOrigin;
 
-	@SuppressWarnings("unused")
+	@SuppressWarnings({ "unused", "deprecation" })
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		/* TODO
-		br = new ArrayList<Broadcaster>();
-		br.add(new Broadcaster(new IntentFilter(Keys.Service.FINISH_ACTIVITY)));
-		br.add(new Broadcaster(new IntentFilter(Keys.Service.IMAGES_GENERATED)));
-
-        
-        sendBroadcast(new Intent()
-			.setAction(InformaConstants.Keys.Service.SET_CURRENT)
-			.putExtra(InformaConstants.Keys.CaptureEvent.MATCH_TIMESTAMP, System.currentTimeMillis())
-			.putExtra(InformaConstants.Keys.CaptureEvent.TYPE, InformaConstants.CaptureEvents.MEDIA_CAPTURED));
-		*/
+		long timestampNow = System.currentTimeMillis();
+		LogPack logPack = new LogPack(CaptureEvent.Keys.USER_ACTION, CaptureEvent.MEDIA_OPENED);
+		
+		InformaService.getInstance()
+			.onSuckerUpdate(timestampNow, logPack);
         
 		setContentView(R.layout.imageviewer);
 
@@ -317,7 +252,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 			// Get the orientation
 			File originalFilename = pullPathFromUri(originalImageUri);			
 			try {
-				JSONObject exif = new JSONObject();
+				LogPack exif = new LogPack();
 				ExifInterface ei = new ExifInterface(originalFilename.getAbsolutePath());
 				
 				originalImageOrientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
@@ -335,16 +270,15 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 				exif.put(Exif.ORIENTATION, originalImageOrientation);
 				exif.put(Exif.WHITE_BALANCE, ei.getAttributeInt(Exif.WHITE_BALANCE, Informa.Keys.NOT_REPORTED));
 				
-				/* TODO
-				sendBroadcast(new Intent()
-					.setAction(InformaConstants.Keys.Service.SET_EXIF)
-					.putExtra(Keys.Image.EXIF, exif.toString()));
-				*/
-				debug(App.LOG, "EXIF: " + exif.toString());
+				InformaService.getInstance()
+					.onSuckerUpdate(Time.timestampToMillis(exif.get(Exif.TIMESTAMP).toString()), exif);
+				
 			} catch (IOException e1) {
 				debug(App.LOG,"Couldn't get Orientation");
 				e1.printStackTrace();
 			} catch (JSONException e) {
+				e.printStackTrace();
+			} catch (ParseException e) {
 				e.printStackTrace();
 			}
 
@@ -518,15 +452,6 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 		};
 		thread.start();
 	}
-	/*
-	 * Do actual auto detection and create regions
-	 * 
-	 * public void createImageRegion(int _scaledStartX, int _scaledStartY, 
-			int _scaledEndX, int _scaledEndY, 
-			int _scaledImageWidth, int _scaledImageHeight, 
-			int _imageWidth, int _imageHeight, 
-			int _backgroundColor) {
-	 */
 	
 	private int doAutoDetection() {
 		// This should be called via a pop-up/alert mechanism
@@ -534,15 +459,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 		RectF[] autodetectedRects = runFaceDetection();
 		for (int adr = 0; adr < autodetectedRects.length; adr++) {
 
-			//debug(ObscuraApp.TAG,"AUTODETECTED imageView Width, Height: " + imageView.getWidth() + " " + imageView.getHeight());
-			//debug(ObscuraApp.TAG,"UNSCALED RECT:" + autodetectedRects[adr].left + " " + autodetectedRects[adr].top + " " + autodetectedRects[adr].right + " " + autodetectedRects[adr].bottom);
-			
 			RectF autodetectedRectScaled = new RectF(autodetectedRects[adr].left, autodetectedRects[adr].top, autodetectedRects[adr].right, autodetectedRects[adr].bottom);
-			
-			//debug(ObscuraApp.TAG,"SCALED RECT:" + autodetectedRectScaled.left + " " + autodetectedRectScaled.top + " " + autodetectedRectScaled.right + " " + autodetectedRectScaled.bottom);
-
-			// Probably need to map autodetectedRects to scaled rects
-		//debug(ObscuraApp.TAG,"MAPPED RECT:" + autodetectedRects[adr].left + " " + autodetectedRects[adr].top + " " + autodetectedRects[adr].right + " " + autodetectedRects[adr].bottom);
 			
 			float faceBuffer = (autodetectedRectScaled.right-autodetectedRectScaled.left)/5;
 			
@@ -655,7 +572,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 	@Override
 	public boolean onTouch(View v, MotionEvent event) 
 	{
-		if (currRegion != null && (mode == DRAG || currRegion.getBounds().contains(event.getX(), event.getY())))		
+		if (currRegion != null && (mode == Mode.DRAG || currRegion.getBounds().contains(event.getX(), event.getY())))		
 			return onTouchRegion(v, event, currRegion);	
 		else
 			return onTouchImage(v,event);
@@ -698,28 +615,26 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 				currRegion.setSelected(true);	
 				currRegion.setCornerMode(event.getX(),event.getY());
 				
-				mode = DRAG;
+				mode = Mode.DRAG;
 				handled = iRegion.onTouch(v, event);
 
 			break;
 			
 			case MotionEvent.ACTION_UP:
-				mode = NONE;
+				mode = Mode.NONE;
 				handled = currRegion.onTouch(v, event);
 				currRegion.setSelected(false);
 				
 			break;
 			
 			case MotionEvent.ACTION_MOVE:
-				mode = DRAG;
+				mode = Mode.DRAG;
 				handled = currRegion.onTouch(v, event);
-				//handled = iRegion.onTouch(v, event);
-				//currRegion.setSelected(false);
 			
 			break;
 			
 			default:
-				mode = NONE;
+				mode = Mode.NONE;
 			
 		}
 		
@@ -735,7 +650,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 		switch (event.getAction() & MotionEvent.ACTION_MASK) {
 			case MotionEvent.ACTION_DOWN:
 				// Single Finger down
-				mode = TAP;				
+				mode = Mode.TAP;				
 				ImageRegion newRegion = findRegion(event);
 				
 				if (newRegion != null)
@@ -778,7 +693,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 				float ysum = event.getY(0) + event.getY(1);
 				startFingerSpacingMidPoint.set(xsum / 2, ysum / 2);
 				
-				mode = ZOOM;
+				mode = Mode.ZOOM;
 				//Log.d(ObscuraApp.TAG, "mode=ZOOM");
 				
 				clearImageRegionsEditMode();
@@ -816,8 +731,8 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 				// If greater than minMoveDistance, it is likely a drag or zoom
 				if (distance > minMoveDistance) {
 				
-					if (mode == TAP || mode == DRAG) {
-						mode = DRAG;
+					if (mode == Mode.TAP || mode == Mode.DRAG) {
+						mode = Mode.DRAG;
 						
 						matrix.postTranslate(event.getX() - startPoint.x, event.getY() - startPoint.y);
 						imageView.setImageMatrix(matrix);
@@ -829,7 +744,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 						
 						handled = true;
 	
-					} else if (mode == ZOOM) {
+					} else if (mode == Mode.ZOOM) {
 						
 						// Save the current matrix so that if zoom goes to big, we can revert
 						savedMatrix.set(matrix);
@@ -860,7 +775,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 							float[] matrixValues = new float[9];
 							matrix.getValues(matrixValues);
 							
-							if (matrixValues[0] > MAX_SCALE) {
+							if (matrixValues[0] > App.ImageEditor.MAX_SCALE) {
 								matrix.set(savedMatrix);
 							}
 							imageView.setImageMatrix(matrix);
@@ -983,12 +898,9 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 	 * Associate the current log data to the image region's properties
 	 */
 	public void associateImageRegionData(ImageRegion ir) {
-		/* TODO
-		sendBroadcast(new Intent()
-			.setAction(Keys.Service.SET_CURRENT)
-			.putExtra(Keys.CaptureEvent.MATCH_TIMESTAMP, (Long) ir.mRProc.getProperties().get(Keys.ImageRegion.TIMESTAMP))
-			.putExtra(Keys.CaptureEvent.TYPE, CaptureEvents.REGION_GENERATED));
-			*/
+		LogPack logPack = new LogPack(CaptureEvent.Keys.USER_ACTION, CaptureEvent.REGION_GENERATED);
+		InformaService.getInstance()
+			.onSuckerUpdate((Long) ir.mRProc.getProperties().get(Informa.Keys.Data.ImageRegion.TIMESTAMP), logPack);
 	}
 	
 	/*
@@ -1043,7 +955,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 			
 			putOnScreen();
 		}
-		else if (mode != DRAG && mode != ZOOM) 
+		else if (mode != Mode.DRAG && mode != Mode.ZOOM) 
 		{
 			float defaultSize = imageView.getWidth()/4;
 			float halfSize = defaultSize/2;
@@ -1076,29 +988,6 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
         return true;
     }
 	
-	private void newDefaultRegion ()
-	{
-		// Set the Start point. 
-		startPoint.set(imageView.getWidth()/2, imageView.getHeight()/2);
-		
-		float defaultSize = imageView.getWidth()/4;
-		float halfSize = defaultSize/2;
-		
-		RectF newRegion = new RectF();
-		
-		newRegion.left = startPoint.x - halfSize;
-		newRegion.top = startPoint.y - halfSize;
-
-		newRegion.right =  startPoint.x + defaultSize;
-		newRegion.left =  startPoint.y + defaultSize;
-		
-		Matrix iMatrix = new Matrix();
-		matrix.invert(iMatrix);
-		iMatrix.mapRect(newRegion);
-		
-		createImageRegion(newRegion.left,newRegion.top,newRegion.right,newRegion.bottom, false, true);
-		
-	}
     /*
      * Normal menu item selected method.  Uses menu items defined in XML: res/menu/image_editor_menu.xml
      */
@@ -1146,25 +1035,6 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 		}
 	}
 	
-	/*
-	 * When the user selects the Share menu item
-	 * Uses saveTmpImage (overwriting what is already there) and uses the standard Android Share Intent
-	 */
-    private void shareImage() {
-    	Uri tmpImageUri;
-    	
-    	if ((tmpImageUri = saveTmpImage()) != null) {
-        	Intent share = new Intent(Intent.ACTION_SEND);
-        	share.setType("image/jpeg");
-        	share.putExtra(Intent.EXTRA_STREAM, tmpImageUri);
-        	startActivity(Intent.createChooser(share, "Share Image"));    	
-    	} else {
-    		Toast t = Toast.makeText(this,"Saving Temporary File Failed!", Toast.LENGTH_SHORT); 
-    		t.show();
-    	}
-    }
-    
-    
     /*
      * Goes through the regions that have been defined and creates a bitmap with them obscured.
      * This may introduce memory issues and therefore have to be done in a different manner.
@@ -1199,7 +1069,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 
             RectF regionRect = new RectF(currentRegion.getBounds());
             
-	    	if (mode != DRAG)
+	    	if (mode != Mode.DRAG)
 	    		om.processRegion(regionRect, obscuredCanvas, obscuredBmp);
 
 	    	if (showBorders)
@@ -1239,14 +1109,10 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
     	Bitmap obscuredBmp = createObscuredBitmap(w,h, false);
     	
     	// Create the Uri - This can't be "private"
-    	File tmpFileDirectory = new File(Environment.getExternalStorageDirectory().getPath() + TMP_FILE_DIRECTORY);
-    	File tmpFile = new File(tmpFileDirectory,TMP_FILE_NAME);
+    	File tmpFile = new File(Storage.FileIO.DUMP_FOLDER, Storage.FileIO.IMAGE_TMP);
     	debug(App.LOG, tmpFile.getPath());
     	
 		try {
-	    	if (!tmpFileDirectory.exists()) {
-	    		tmpFileDirectory.mkdirs();
-	    	}
 	    	Uri tmpImageUri = Uri.fromFile(tmpFile);
 	    	
 			OutputStream imageFileOS;
@@ -1268,7 +1134,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
      * This in combination with createObscuredBitmap could/should be done in another, more memory efficient manner. 
      */
     private boolean saveImage() throws IOException {
-    	SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.Media.EXPORT_DATE_FORMAT);
+    	SimpleDateFormat dateFormat = new SimpleDateFormat(Constants.Media.DateFormats.EXPORT_DATE_FORMAT);
     	Date date = new Date();
     	String dateString = dateFormat.format(date);
     	
@@ -1309,12 +1175,8 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
 			return false;
 		}
 		
-		/* TODO
-		sendBroadcast(new Intent()
-			.setAction(InformaConstants.Keys.Service.SET_CURRENT)
-			.putExtra(InformaConstants.Keys.CaptureEvent.MATCH_TIMESTAMP, System.currentTimeMillis())
-			.putExtra(InformaConstants.Keys.CaptureEvent.TYPE, InformaConstants.CaptureEvents.MEDIA_SAVED));
-		*/
+		InformaService.getInstance()
+			.onSuckerUpdate(System.currentTimeMillis(), new LogPack(CaptureEvent.Keys.USER_ACTION, CaptureEvent.MEDIA_SAVED));
 		
 		JSONArray imageRegionObject = new JSONArray();
 		try {
@@ -1433,7 +1295,7 @@ public class ImageEditor extends Activity implements OnTouchListener, OnClickLis
     				  public void run() {
     				    // this will be done in the Pipeline Thread
 		        		if(data.hasExtra(Informa.Keys.Intent.ENCRYPT_LIST))
-		        			encryptList = data.getLongArrayExtra(Informa.Keys.Intent.ENCRYPT_LIST);
+		        			//encryptList = data.getLongArrayExtra(Informa.Keys.Intent.ENCRYPT_LIST);
 		        		try {
 							saveImage();
 						} catch (IOException e) {

@@ -12,6 +12,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import org.witness.informacam.R;
 import org.witness.informacam.app.Eula.OnEulaAgreedTo;
 import org.witness.informacam.app.MainRouter.OnRoutedListener;
+import org.witness.informacam.app.editors.image.ImageEditor;
 import org.witness.informacam.crypto.SignatureUtility;
 import org.witness.informacam.informa.InformaService;
 import org.witness.informacam.informa.InformaService.LocalBinder;
@@ -174,8 +175,8 @@ public class MainActivity extends Activity implements OnEulaAgreedTo, OnClickLis
     }
     
     private void launchEditor() {
-    	//editorIntent.setData(mediaCaptureUri);
-    	//startActivity(editorIntent);
+    	editorIntent.setData(mediaCaptureUri);
+    	startActivity(editorIntent);
     	Toast.makeText(this, "i would launch the editor here\nURI: " + mediaCaptureUri.toString(), Toast.LENGTH_LONG).show();
     }
     
@@ -206,8 +207,7 @@ public class MainActivity extends Activity implements OnEulaAgreedTo, OnClickLis
     		case App.Main.FROM_MEDIA_CAPTURE:
     			Log.d(App.LOG, mediaCaptureFile.getAbsolutePath());
     			if(mediaCaptureFile.getName().equals(Storage.FileIO.IMAGE_TMP)) {
-    				//editorIntent = new Intent(this, ImageEditor.class);
-    				launchEditor();
+    				editorIntent = new Intent(this, ImageEditor.class);
     			} else {
     				//editorIntent = new Intent(this, VideoEditor.class);
     				mediaCaptureUri = data.getData();
@@ -226,9 +226,8 @@ public class MainActivity extends Activity implements OnEulaAgreedTo, OnClickLis
 					} catch (IOException e) {
 						Log.e(App.LOG, e.toString());
 					}
-					
-					new InformaMediaScanner((MainActivity) this, mediaCaptureFile);
     			}
+    			new InformaMediaScanner((MainActivity) this, mediaCaptureFile);
     			break;
     		}
     	}

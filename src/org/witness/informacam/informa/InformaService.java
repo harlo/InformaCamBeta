@@ -108,7 +108,6 @@ public class InformaService extends Service implements OnSuckerUpdateListener {
 		
 	@SuppressWarnings({"unchecked","deprecation"})
 	private void init() {
-		ex = Executors.newFixedThreadPool(100);
 		br.add(new Broadcaster(new IntentFilter(BluetoothDevice.ACTION_FOUND)));
 		
 		for(BroadcastReceiver b : br)
@@ -166,6 +165,8 @@ public class InformaService extends Service implements OnSuckerUpdateListener {
 	@Override
 	public void onSuckerUpdate(long timestamp, final LogPack logPack) {
 		try {
+			Log.d(Suckers.LOG, timestamp + " :\n" + logPack.toString());
+			ex = Executors.newFixedThreadPool(100);
 			Future<String> sig = ex.submit(new Callable<String>() {
 
 				@Override
@@ -174,8 +175,9 @@ public class InformaService extends Service implements OnSuckerUpdateListener {
 				}
 				
 			});
-			Log.d(Suckers.LOG, "logged: " + logPack.toString());
 			logPack.put(Signatures.Keys.SIGNATURE, sig.get());
+			suckerCache.put(timestamp, logPack);
+			ex.shutdown();
 		} catch (JSONException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
@@ -183,7 +185,6 @@ public class InformaService extends Service implements OnSuckerUpdateListener {
 		} catch (ExecutionException e) {
 			e.printStackTrace();
 		}
-		suckerCache.put(timestamp, logPack);
 	}
 	
 	private class Broadcaster extends BroadcastReceiver {

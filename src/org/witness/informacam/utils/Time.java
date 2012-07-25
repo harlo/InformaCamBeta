@@ -6,17 +6,26 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.witness.informacam.utils.Constants.Media;
+
 public class Time {
-	public final static long timestampToMillis(String ts) throws ParseException {
+	public final static long timestampToMillis(String ts, String dateFormat) throws ParseException {
 		//2012:06:12 10:42:04
+		if(dateFormat == null)
+			dateFormat = Media.DateFormats.EXIF_DATE_FORMAT;
+		
 		try {
-			DateFormat df = new SimpleDateFormat("yyyy:MM:dd hh:mm:ss", Locale.getDefault());
+			DateFormat df = new SimpleDateFormat(dateFormat, Locale.getDefault());
 		
 			Date d = (Date) df.parse(ts);
 			return d.getTime();
 		} catch(ParseException e) {
 			return Long.parseLong(ts);
 		}
+	}
+	
+	public final static long timestampToMillis(String ts) throws ParseException {
+		return timestampToMillis(ts, null);
 	}
 	
 	public final static String millisecondsToTimestamp(long ms, long max) {
