@@ -88,7 +88,6 @@ public class AddressBookActivity extends Activity implements OnClickListener, On
 						);
 				
 				try {
-					Log.d(App.LOG, abd.toString());
 					abd.remove(AddressBook.Keys.CONTACT_ID);
 					abd.put(TrustedDestination.Keys.KEYRING_ID, a.getLong(a.getColumnIndex(TrustedDestination.Keys.KEYRING_ID)));
 					abd.put(BaseColumns._ID, a.getLong(a.getColumnIndex(BaseColumns._ID)));
